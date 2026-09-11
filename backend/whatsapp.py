@@ -64,7 +64,7 @@ def register(ctx):
 
     @router.get("/config")
     async def config(_: dict = Depends(admin_user)):
-        return {"enabled": is_enabled(), "sandbox": "14155238886" in FROM, "from": FROM, "owner": OWNER, "customer_alerts": CUSTOMER_ALERTS}
+        return {"enabled": is_enabled(), "sandbox": FROM in ("+14155238886", "+17372508034"), "from": FROM, "owner": OWNER, "customer_alerts": CUSTOMER_ALERTS}
 
     @router.post("/test")
     async def test(_: dict = Depends(admin_user)):

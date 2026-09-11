@@ -115,3 +115,17 @@
 .sound-toggle:disabled{opacity:.6;cursor:default}
 .wa-error{max-width:420px;text-align:left;line-height:1.6}
 @media (max-width:800px){.admin-side-row{justify-content:flex-start}}
+.timing-band{background:#fff;border-bottom:1px solid var(--line)}
+.timing-inner{max-width:1160px;margin:auto;padding:60px 32px;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:22px;align-items:stretch}
+.timing-head h2{font-size:clamp(1.8rem,3vw,2.6rem);margin:0}
+.timing-card{background:var(--cream);border:1px solid var(--line);padding:22px 24px;position:relative;transition:transform .2s,box-shadow .2s}
+.timing-card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(87,25,15,.08)}
+.timing-card.open{border-top:3px solid #438a50}.timing-card:not(.open){border-top:3px solid #c9b8b0}
+.timing-status{display:inline-flex;align-items:center;gap:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;font-weight:700;color:#9a8a82}
+.timing-card.open .timing-status{color:#438a50}.timing-card.open .timing-status:before{content:'';width:7px;height:7px;border-radius:50%;background:#438a50;box-shadow:0 0 0 3px #438a5033;animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.4}}
+.timing-card h3{font-size:24px;margin:10px 0 14px;color:var(--burgundy)}
+.timing-card dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13px}
+.timing-card dt{color:var(--muted);font-size:11px;letter-spacing:.5px;text-transform:uppercase;padding-top:2px}.timing-card dd{margin:0;font-weight:600;color:var(--ink)}
+@media (max-width:900px){.timing-inner{grid-template-columns:1fr 1fr;padding:45px 20px}.timing-head{grid-column:1/-1}}
+@media (max-width:520px){.timing-inner{grid-template-columns:1fr}}
