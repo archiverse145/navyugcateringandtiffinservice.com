@@ -11,6 +11,9 @@ from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depend
 from fastapi.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel, Field, EmailStr, field_validator
+import asyncio
+import payments as payments_module
+import emailer
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("navyug")
@@ -91,6 +94,17 @@ async def setup_status(): return {"configured": bool(await db.users.find_one({"r
 
 @api.get("/menu")
 async def menu(): return [public(x) for x in await db.menu.find({}).sort("category", 1).to_list(100)]
+@api.get("/menu/most-ordered")
+async def most_ordered():
+    pipeline = [{"$unwind": "$items"}, {"$group": {"_id": "$items.menu_id", "ordered": {"$sum": "$items.quantity"}}}, {"$sort": {"ordered": -1}}, {"$limit": 4}]
+    ranked = await db.orders.aggregate(pipeline).to_list(4)
+    if not ranked:
+        featured = ["Mini Idlis", "Sandwich", "Punjabi Rajma", "Punjabi Chole"]
+        dishes = {x["name"]: public(x) for x in await db.menu.find({"name": {"$in": featured}, "available": True}).to_list(10)}
+        return [{**dishes[name], "ordered": 0} for name in featured if name in dishes]
+    ids = [x["_id"] for x in ranked]
+    dishes = {x["id"]: public(x) for x in await db.menu.find({"id": {"$in": ids}, "available": True}).to_list(20)}
+    return [{**dishes[x["_id"]], "ordered": x["ordered"]} for x in ranked if x["_id"] in dishes]
 @api.post("/menu")
 async def create_menu(data: MenuIn, _: dict = Depends(admin_user)):
     doc = data.model_dump(); doc.update({"id": uuid.uuid4().hex[:10], "created_at": now()}); await db.menu.insert_one(doc); return public(doc)
@@ -114,18 +128,29 @@ async def create_order(data: OrderIn, user=Depends(current_user)):
         items.append({"menu_id": item["id"], "name": item["name"], "price": item["price"], "quantity": quantity})
     delivery = 40 if subtotal < 500 else 0
     doc = {"order_id": "NV-" + secrets.token_hex(4).upper(), "user_id": str(user["_id"]), "customer_name": data.customer_name, "phone": data.phone, "email": data.email, "address": data.address, "special_instructions": data.special_instructions, "items": items, "subtotal": subtotal, "delivery_fee": delivery, "total": subtotal+delivery, "payment_status": "Pending", "status": "Pending", "created_at": now()}
-    await db.orders.insert_one(doc); return public(doc)
+    await db.orders.insert_one(doc)
+    if doc.get("email"):
+        asyncio.create_task(emailer.send_order_confirmation(doc))
+    return public(doc)
 @api.get("/orders")
 async def my_orders(user=Depends(current_user)): return [public(x) for x in await db.orders.find({"user_id": str(user["_id"])}).sort("created_at", -1).to_list(100)]
 @api.get("/orders/all")
 async def all_orders(_: dict = Depends(admin_user)): return [public(x) for x in await db.orders.find({}).sort("created_at", -1).to_list(200)]
 @api.patch("/orders/{order_id}")
 async def order_status(order_id: str, data: StatusIn, _: dict = Depends(admin_user)):
-    await db.orders.update_one({"order_id": order_id}, {"$set": {"status": data.status}}); return {"ok": True}
+    await db.orders.update_one({"order_id": order_id}, {"$set": {"status": data.status}})
+    order = await db.orders.find_one({"order_id": order_id})
+    if order and order.get("email"):
+        asyncio.create_task(emailer.send_order_status(order, data.status))
+    return {"ok": True}
 
 @api.post("/catering")
 async def catering(data: CateringIn):
-    doc = data.model_dump(); doc.update({"inquiry_id": "CAT-"+secrets.token_hex(3).upper(), "status": "New", "created_at": now()}); await db.catering.insert_one(doc); return public(doc)
+    doc = data.model_dump(); doc.update({"inquiry_id": "CAT-"+secrets.token_hex(3).upper(), "status": "New", "created_at": now()})
+    await db.catering.insert_one(doc)
+    if doc.get("email"):
+        asyncio.create_task(emailer.send_catering_ack(doc))
+    return public(doc)
 @api.get("/catering")
 async def catering_list(_: dict = Depends(admin_user)): return [public(x) for x in await db.catering.find({}).sort("created_at", -1).to_list(200)]
 @api.patch("/catering/{inquiry_id}")
@@ -141,14 +166,21 @@ async def contact_status(inquiry_id: str, data: StatusIn, _: dict = Depends(admi
     return {"ok": True}
 
 async def seed_menu():
-    if await db.menu.count_documents({}): return
     images = ["https://images.unsplash.com/photo-1627366422957-3efa9c6df0fc?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80"]
     dishes = [("Dal Tadka","Yellow lentils tempered with garlic, cumin and ghee.","Dal",180),("Dal Makhani","Slow-cooked black lentils, rich and creamy.","Dal",220),("Punjabi Chole","Robust chickpeas simmered with Punjabi spices.","Punjabi",200),("Plain Rice","Steamed long-grain rice, light and fluffy.","Rice",120),("Jeera Rice","Basmati rice tossed with roasted cumin.","Rice",140),("Matar Pulao","Fragrant rice with sweet green peas.","Rice",160),("Vegetable Tawa Pulao","Mumbai-style spiced rice with fresh vegetables.","Rice",190),("Kadhai Paneer","Paneer, peppers and onion in a bright kadai masala.","Paneer",260),("Matar Paneer","Soft paneer and peas in a homestyle gravy.","Paneer",240)]
-    await db.menu.insert_many([{ "id": uuid.uuid4().hex[:10], "name": n, "description": d, "category": c, "price": p, "image": images[i%3], "is_vegetarian": True, "available": True, "created_at": now()} for i,(n,d,c,p) in enumerate(dishes)])
+    if not await db.menu.count_documents({}):
+        await db.menu.insert_many([{ "id": uuid.uuid4().hex[:10], "name": n, "description": d, "category": c, "price": p, "image": images[i%3], "is_vegetarian": True, "available": True, "created_at": now()} for i,(n,d,c,p) in enumerate(dishes)])
+    featured = [("Mini Idlis","Soft, bite-sized idlis served with a gentle tempering.","South Indian",160),("Sandwich","Freshly toasted sandwich with a homestyle filling.","Quick Bites",150),("Punjabi Rajma","Slow-cooked kidney beans in a comforting Punjabi gravy.","Punjabi",210)]
+    for i,(name, description, category, price) in enumerate(featured):
+        if not await db.menu.find_one({"name": name}):
+            await db.menu.insert_one({"id": uuid.uuid4().hex[:10], "name": name, "description": description, "category": category, "price": price, "image": images[i%3], "is_vegetarian": True, "available": True, "created_at": now()})
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True); await seed_menu()
+    await db.users.create_index("email", unique=True)
+    await db.razorpay_webhook_events.create_index("event_id", unique=True)
+    await seed_menu()
 @app.on_event("shutdown")
 async def shutdown(): client.close()
 app.include_router(api)
+app.include_router(payments_module.register({"db": db, "current_user": current_user}))
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000"), "https://navyug-taste-love.preview.emergentagent.com"], allow_methods=["*"], allow_headers=["*"])

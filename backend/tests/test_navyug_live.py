@@ -28,6 +28,17 @@ def test_health_and_menu():
     assert {"id", "name", "price", "category", "available", "is_vegetarian"}.issubset(r.json()[0])
 
 
+def test_most_ordered_returns_ranked_menu_items():
+    """Most-ordered homepage data exposes menu fields and descending quantities."""
+    r = requests.get(f"{BASE_URL}/api/menu/most-ordered")
+    assert r.status_code == 200, r.text
+    data = r.json()
+    assert isinstance(data, list) and len(data) <= 4
+    assert all({"id", "name", "price", "category", "image", "ordered"}.issubset(item) for item in data)
+    assert all(isinstance(item["ordered"], (int, float)) and item["ordered"] >= 0 for item in data)
+    assert [item["ordered"] for item in data] == sorted((item["ordered"] for item in data), reverse=True)
+
+
 def test_unauthenticated_order_rejected():
     menu = requests.get(f"{BASE_URL}/api/menu").json()
     r = requests.post(f"{BASE_URL}/api/orders", json={"customer_name": "x", "phone": "1", "address": "x",

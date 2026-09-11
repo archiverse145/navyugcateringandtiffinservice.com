@@ -1,33 +1,39 @@
-# Navyug Catering & Tiffin Services — Product Requirements
+# Navyug Catering & Tiffin Services — PRD
 
-## Original problem statement
-Build a complete, production-quality full-stack web application for Navyug Catering & Tiffin Services with a customer website, menu, cart, ordering, accounts, catering, contact, REST backend, MongoDB, authentication, and admin dashboard. The brand is warm Indian homemade food with the tagline “The taste of love……”.
+## Original Problem Statement
+Production-quality full-stack web app for Navyug Catering & Tiffin Services (Indian homemade-food/tiffin/catering). Tagline: "The taste of love……". Burgundy/deep red brand identity. Customer site with menu, cart, ordering, catering + contact forms, customer accounts, admin dashboard, custom JWT auth, MongoDB.
 
-## Architecture decisions
-- React frontend with React Router and Axios, FastAPI REST API, MongoDB via Motor.
-- JWT stored in an httpOnly cookie; bcrypt password hashing and role checks for admins.
-- Backend recalculates order prices from current available menu items and stores item snapshots.
-- Menu and inquiries are database-backed; payment remains a future-ready pending status.
+## Architecture
+- Frontend: React 19 + react-router 7 + shadcn/ui + custom warm Indian food CSS
+- Backend: FastAPI + Motor async MongoDB
+- Auth: Custom JWT via HttpOnly cookies
+- Payments: Razorpay (server-side order creation, HMAC signature verify, webhook)
+- Email: Resend for transactional emails (order confirmation + status)
 
-## Personas
-- Local customer ordering fresh vegetarian meals or recurring tiffin.
-- Host planning catering for a gathering.
-- Navyug administrator managing dishes, orders, and inquiries.
+## User Personas
+- Customer: Orders daily tiffin, browses menu, tracks order status.
+- Event Host: Submits catering inquiry for events.
+- Admin: Manages menu, orders, catering inquiries, contact messages.
 
-## Core requirements
-- Responsive branded storefront, database menu, category filters, cart, checkout, customer auth/order history, catering/contact forms, protected admin workflows.
+## What's Implemented (Feb 2026)
+- Storefront home with hero, "Most Ordered" section
+- Dynamic menu with categories, seed data
+- Cart with quantity controls + delivery fee logic
+- Checkout with backend price validation
+- Customer register/login/logout via JWT
+- Order status flow: Pending → Confirmed → Preparing → Out for Delivery → Delivered/Cancelled
+- Catering inquiry form + admin management
+- Contact inquiry form + admin management
+- Admin dashboard: menu CRUD, order status, catering + contact status management
+- First-admin one-time setup lock
+- **NEW: Razorpay payment integration** — /api/payments/razorpay/config, /orders, /verify, /webhook (all inactive until keys added)
+- **NEW: Resend transactional email** — order confirmation, status update, catering ack (silently no-ops until API key added)
+- Frontend Checkout conditionally shows "Pay Online" button when Razorpay enabled; COD-only fallback otherwise
 
-## Implemented — 2026-02-18
-- Replaced starter API with menu seed data, auth, admin setup, orders, catering, contact, and status endpoints.
-- Built responsive customer experience with Navyug brand system, selected food photography, menu/cart/checkout, confirmation, tiffin, catering, and contact screens.
-- Built authenticated admin operations for orders, catering, and contact inquiry status management.
-
-## Prioritized backlog
-- P0: customer order history/profile screen; menu CRUD form in admin; refresh-token rotation and rate limiting.
-- P1: payment provider, tiffin subscription plans, notifications, image upload.
-- P2: coupons, reviews, delivery tracking, WhatsApp integration.
-
-## Next tasks
-- Add protected customer account route showing profile and past orders.
-- Add admin menu editor and inquiry internal notes.
-- Add automated API and browser regression coverage.
+## Prioritized Backlog
+- P0: Add Razorpay test keys (RAZORPAY_KEY_ID, KEY_SECRET, WEBHOOK_SECRET) to activate online payments
+- P0: Add RESEND_API_KEY to activate order emails
+- P0: Google Places API integration for live Google Reviews (needs Places API key + Place ID; user's business CID: 1443852844271025327)
+- P1: Twilio WhatsApp notifications (deferred until production WhatsApp Business number is approved)
+- P1: Tiffin Subscriptions / Monthly Plans
+- P2: Delivery tracking, coupons, in-app reviews
