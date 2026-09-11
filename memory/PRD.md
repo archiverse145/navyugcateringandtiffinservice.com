@@ -30,6 +30,7 @@ Production-quality full-stack web app for Navyug Catering & Tiffin Services (Ind
 - **NEW: Resend transactional email** — order confirmation, status update, catering ack (silently no-ops until API key added)
 - Frontend Checkout conditionally shows "Pay Online" button when Razorpay enabled; COD-only fallback otherwise
 - **NEW (Jun 2026): Printable order receipt** — `src/Receipt.js` modal with Print/Save PDF (print-only CSS), Share (Web Share API → clipboard fallback). Opened from confirmation page (`confirmation-receipt-button`) and every row in Account order history (`receipt-button-{order_id}`). Account page styles added.
+- **Jun 2026 business details**: main phone 9305162868 (orders/tiffin), catering phone 9389887970, Instagram @navyugcateringandtiffinservice. Real menu seeded (menu_seed version 2 in `settings` collection; 50 items, `section` field = "tiffin" | "snacks"). Default prices: gravy/dal ₹120, dry/snacks/breakfast/sweets ₹80, chapati ₹20, rice bowl ₹50, Plain Idli ₹10 — admin edits via dashboard. New `/just-hungry` page (snacks); `/tiffin` shows grouped tiffin menu with Add-to-cart. Admin menu form has section selector. Dish photos are still Unsplash placeholders — user to send originals.
 - **NEW (Jun 2026): Reorder** — "Order again" on receipt (`receipt-reorder-button`) + "Reorder" per Account row (`reorder-button-{order_id}`) refills cart from live menu (skips unavailable dishes) and navigates to /cart.
 
 ## Prioritized Backlog

@@ -48,3 +48,8 @@
 .account-order span{color:var(--muted)}
 .account-order strong{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink)}
 @media (max-width:760px){.account-grid{grid-template-columns:1fr}}
+.tiffin-page{max-width:1240px}
+.dish-group{margin-top:60px}
+.dish-group-title{font-size:clamp(1.6rem,3vw,2.4rem);margin-bottom:24px;padding-bottom:14px;border-bottom:1px solid var(--line);color:var(--burgundy)}
+.menu-editor select{width:100%;border:1px solid var(--line);background:#fff;padding:14px 15px;margin-bottom:12px;color:var(--ink);font-size:13px}
+.contact-details{flex-wrap:wrap}

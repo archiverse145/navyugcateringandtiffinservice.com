@@ -49,7 +49,7 @@ async def admin_user(user=Depends(current_user)):
 
 class Register(BaseModel): name: str; email: EmailStr; phone: str = ""; password: str = Field(min_length=6); address: str = ""
 class Login(BaseModel): email: str; password: str
-class MenuIn(BaseModel): name: str; description: str; category: str; price: float = Field(gt=0); image: str; is_vegetarian: bool = True; available: bool = True
+class MenuIn(BaseModel): name: str; description: str; category: str; section: str = "tiffin"; price: float = Field(gt=0); image: str; is_vegetarian: bool = True; available: bool = True
 class OrderIn(BaseModel): customer_name: str; phone: str; email: Optional[EmailStr] = None; address: str; special_instructions: str = ""; items: list[dict]
 class CateringIn(BaseModel):
     name: str; phone: str; email: Optional[EmailStr] = None; event_type: str; event_date: str; guests: int = Field(gt=0); location: str; requirements: str = ""; message: str = ""
@@ -93,18 +93,18 @@ async def setup_admin(data: SetupIn, response: Response):
 async def setup_status(): return {"configured": bool(await db.users.find_one({"role": "admin"}))}
 
 @api.get("/menu")
-async def menu(): return [public(x) for x in await db.menu.find({}).sort("category", 1).to_list(100)]
+async def menu(): return [public(x) for x in await db.menu.find({}).sort("created_at", 1).to_list(200)]
 @api.get("/menu/most-ordered")
 async def most_ordered():
     pipeline = [{"$unwind": "$items"}, {"$group": {"_id": "$items.menu_id", "ordered": {"$sum": "$items.quantity"}}}, {"$sort": {"ordered": -1}}, {"$limit": 4}]
     ranked = await db.orders.aggregate(pipeline).to_list(4)
-    if not ranked:
-        featured = ["Mini Idlis", "Sandwich", "Punjabi Rajma", "Punjabi Chole"]
-        dishes = {x["name"]: public(x) for x in await db.menu.find({"name": {"$in": featured}, "available": True}).to_list(10)}
-        return [{**dishes[name], "ordered": 0} for name in featured if name in dishes]
     ids = [x["_id"] for x in ranked]
     dishes = {x["id"]: public(x) for x in await db.menu.find({"id": {"$in": ids}, "available": True}).to_list(20)}
-    return [{**dishes[x["_id"]], "ordered": x["ordered"]} for x in ranked if x["_id"] in dishes]
+    result = [{**dishes[x["_id"]], "ordered": x["ordered"]} for x in ranked if x["_id"] in dishes]
+    if result: return result
+    featured = ["Samosa", "Pav Bhaji", "Dal Makhani", "Paneer Butter Masala"]
+    dishes = {x["name"]: public(x) for x in await db.menu.find({"name": {"$in": featured}, "available": True}).to_list(10)}
+    return [{**dishes[name], "ordered": 0} for name in featured if name in dishes]
 @api.post("/menu")
 async def create_menu(data: MenuIn, _: dict = Depends(admin_user)):
     doc = data.model_dump(); doc.update({"id": uuid.uuid4().hex[:10], "created_at": now()}); await db.menu.insert_one(doc); return public(doc)
@@ -167,13 +167,21 @@ async def contact_status(inquiry_id: str, data: StatusIn, _: dict = Depends(admi
 
 async def seed_menu():
     images = ["https://images.unsplash.com/photo-1627366422957-3efa9c6df0fc?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1601050690597-df0568f70950?auto=format&fit=crop&w=900&q=80"]
-    dishes = [("Dal Tadka","Yellow lentils tempered with garlic, cumin and ghee.","Dal",180),("Dal Makhani","Slow-cooked black lentils, rich and creamy.","Dal",220),("Punjabi Chole","Robust chickpeas simmered with Punjabi spices.","Punjabi",200),("Plain Rice","Steamed long-grain rice, light and fluffy.","Rice",120),("Jeera Rice","Basmati rice tossed with roasted cumin.","Rice",140),("Matar Pulao","Fragrant rice with sweet green peas.","Rice",160),("Vegetable Tawa Pulao","Mumbai-style spiced rice with fresh vegetables.","Rice",190),("Kadhai Paneer","Paneer, peppers and onion in a bright kadai masala.","Paneer",260),("Matar Paneer","Soft paneer and peas in a homestyle gravy.","Paneer",240)]
-    if not await db.menu.count_documents({}):
-        await db.menu.insert_many([{ "id": uuid.uuid4().hex[:10], "name": n, "description": d, "category": c, "price": p, "image": images[i%3], "is_vegetarian": True, "available": True, "created_at": now()} for i,(n,d,c,p) in enumerate(dishes)])
-    featured = [("Mini Idlis","Soft, bite-sized idlis served with a gentle tempering.","South Indian",160),("Sandwich","Freshly toasted sandwich with a homestyle filling.","Quick Bites",150),("Punjabi Rajma","Slow-cooked kidney beans in a comforting Punjabi gravy.","Punjabi",210)]
-    for i,(name, description, category, price) in enumerate(featured):
-        if not await db.menu.find_one({"name": name}):
-            await db.menu.insert_one({"id": uuid.uuid4().hex[:10], "name": name, "description": description, "category": category, "price": price, "image": images[i%3], "is_vegetarian": True, "available": True, "created_at": now()})
+    S, T = "snacks", "tiffin"
+    dishes = [
+        ("Stir Fried Mini Idlis","Bite-sized idlis tossed in a light tempering.","Snacks",80,S),("Stir Fried Mini Vegetable Idli","Mini idlis stir-fried with crunchy vegetables.","Snacks",80,S),("Vegetable Mayo Sandwich","Fresh vegetables and creamy mayo between soft bread.","Snacks",80,S),("Aloo Besan Tikki","Crisp potato and gram-flour patties.","Snacks",80,S),("Sabudana Tikki","Golden sago patties, crunchy outside and soft inside.","Snacks",80,S),("Crispy Corn","Sweet corn fried crisp and tossed in spices.","Snacks",80,S),("Pav Bhaji","Buttery mashed vegetable bhaji with toasted pav.","Snacks",80,S),("Idli Sambhar","Steamed idlis with warm sambhar and chutney.","Snacks",80,S),("Vegetable Sewai","Savoury vermicelli tempered with vegetables.","Snacks",80,S),("Pasta / Macaroni","Home-style pasta in a comforting sauce.","Snacks",80,S),("French Fries","Crisp golden fries, lightly salted.","Snacks",80,S),("Samosa","Flaky pastry filled with spiced potatoes and peas.","Snacks",80,S),("Cutlets","Crisp vegetable cutlets served with chutney.","Snacks",80,S),("Plain Idli","Soft steamed idli, priced per piece.","Snacks",10,S),
+        ("Vegetable Poha","Light flattened rice with vegetables, garnished with pomegranate.","Breakfast",80,T),("Vegetable Sewai (Breakfast)","Savoury vermicelli tempered with vegetables.","Breakfast",80,T),("Aloo Sabji + Poori","Spiced potato curry with puffed pooris.","Breakfast",80,T),("Mini Fried Idlis + Green Chutney","Crisp mini idlis with fresh green chutney.","Breakfast",80,T),("Besan Batata Tikki","Gram-flour and potato tikkis, pan-crisped.","Breakfast",80,T),("Vegetable Mayo Sandwich (Breakfast)","Fresh vegetables and creamy mayo between soft bread.","Breakfast",80,T),("Idli Sambhar (Breakfast)","Steamed idlis with warm sambhar.","Breakfast",80,T),("Mangodi","Moong dal nuggets in a homestyle preparation.","Breakfast",80,T),("Aloo Paratha","Stuffed potato paratha, served with curd.","Breakfast",80,T),("Mooli Paratha","Radish-stuffed paratha, crisp on the tawa.","Breakfast",80,T),
+        ("Dal Makhani","Slow-cooked black lentils, rich and creamy.","Dal",120,T),("Punjabi Rajma","Kidney beans in a comforting Punjabi gravy.","Dal",120,T),("Punjabi Chole","Chickpeas simmered with Punjabi spices.","Dal",120,T),("Mix Dal","Five lentils cooked together, home style.","Dal",120,T),("Dal Tadka","Yellow lentils tempered with garlic and cumin.","Dal",120,T),("Langar Dal","Gurudwara-style slow-cooked dal.","Dal",120,T),("Yellow Moong","Light yellow moong dal, gently spiced.","Dal",120,T),
+        ("Matar Mushroom","Mushrooms and peas in a homestyle gravy.","Gravy",120,T),("Kadhai Mushroom","Mushrooms in a bright kadhai masala.","Gravy",120,T),("Matar Paneer","Soft paneer and peas in tomato gravy.","Gravy",120,T),("Shahi Paneer","Paneer in a rich, royal cashew gravy.","Gravy",120,T),("Kadhai Paneer","Paneer, peppers and onion in kadhai masala.","Gravy",120,T),("Paneer Butter Masala","Paneer in a buttery tomato gravy.","Gravy",120,T),("Palak Paneer","Paneer in smooth spinach gravy.","Gravy",120,T),("Palak Corn","Sweet corn in creamy spinach.","Gravy",120,T),("Kadhi Pakoda","Yogurt kadhi with soft pakodas.","Gravy",120,T),("Aloo Matar","Potatoes and peas in a light gravy.","Gravy",120,T),("Aloo Kofta","Potato koftas in a silky gravy.","Gravy",120,T),
+        ("Chapati","Soft whole-wheat chapati, per piece.","Roti & Rice",20,T),("Plain Rice (1 bowl)","Steamed rice, one bowl.","Roti & Rice",50,T),("Jeera Rice (1 bowl)","Cumin-tossed rice, one bowl.","Roti & Rice",50,T),
+        ("Gulab Jamun","Soft milk dumplings in rose syrup.","Desi Meetha",80,T),("Kheer","Slow-cooked rice pudding with cardamom.","Desi Meetha",80,T),("Suji Halwa","Warm semolina halwa with ghee and nuts.","Desi Meetha",80,T),
+        ("Chai","Hot masala chai.","Drinks",20,T),("Cold Drink","Chilled soft drink.","Drinks",40,T),
+    ]
+    marker = await db.settings.find_one({"key": "menu_seed"})
+    if marker and marker.get("version", 0) >= 2: return
+    await db.menu.delete_many({})
+    await db.menu.insert_many([{"id": uuid.uuid4().hex[:10], "name": n, "description": d, "category": c, "section": sec, "price": p, "image": images[i%3], "is_vegetarian": True, "available": True, "created_at": now()} for i,(n,d,c,p,sec) in enumerate(dishes)])
+    await db.settings.update_one({"key": "menu_seed"}, {"$set": {"version": 2}}, upsert=True)
 @app.on_event("startup")
 async def startup():
     await db.users.create_index("email", unique=True)
