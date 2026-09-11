@@ -15,6 +15,7 @@ import asyncio
 import payments as payments_module
 import emailer
 import storage as storage_module
+import whatsapp
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("navyug")
@@ -132,6 +133,7 @@ async def create_order(data: OrderIn, user=Depends(current_user)):
     delivery = 40 if subtotal < 500 else 0
     doc = {"order_id": "NV-" + secrets.token_hex(4).upper(), "user_id": str(user["_id"]), "customer_name": data.customer_name, "phone": data.phone, "email": data.email, "address": data.address, "special_instructions": data.special_instructions, "items": items, "subtotal": subtotal, "delivery_fee": delivery, "total": subtotal+delivery, "payment_status": "Pending", "status": "Pending", "created_at": now()}
     await db.orders.insert_one(doc)
+    asyncio.create_task(whatsapp.notify_new_order(doc))
     if doc.get("email"):
         asyncio.create_task(emailer.send_order_confirmation(doc))
     return public(doc)
@@ -143,14 +145,16 @@ async def all_orders(_: dict = Depends(admin_user)): return [public(x) for x in 
 async def order_status(order_id: str, data: StatusIn, _: dict = Depends(admin_user)):
     await db.orders.update_one({"order_id": order_id}, {"$set": {"status": data.status}})
     order = await db.orders.find_one({"order_id": order_id})
-    if order and order.get("email"):
-        asyncio.create_task(emailer.send_order_status(order, data.status))
+    if order:
+        asyncio.create_task(whatsapp.notify_customer_status(order, data.status))
+        if order.get("email"): asyncio.create_task(emailer.send_order_status(order, data.status))
     return {"ok": True}
 
 @api.post("/catering")
 async def catering(data: CateringIn):
     doc = data.model_dump(); doc.update({"inquiry_id": "CAT-"+secrets.token_hex(3).upper(), "status": "New", "created_at": now()})
     await db.catering.insert_one(doc)
+    asyncio.create_task(whatsapp.notify_catering(doc))
     if doc.get("email"):
         asyncio.create_task(emailer.send_catering_ack(doc))
     return public(doc)
@@ -198,4 +202,5 @@ async def shutdown(): client.close()
 app.include_router(api)
 app.include_router(payments_module.register({"db": db, "current_user": current_user}))
 app.include_router(storage_module.register({"db": db, "admin_user": admin_user}))
+app.include_router(whatsapp.register({"admin_user": admin_user}))
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000"), "https://navyug-taste-love.preview.emergentagent.com"], allow_methods=["*"], allow_headers=["*"])

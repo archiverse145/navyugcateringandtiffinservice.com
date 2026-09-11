@@ -69,7 +69,7 @@ def register(ctx):
         photo_id = uuid.uuid4().hex[:12]
         try: result = await asyncio.to_thread(put_object, f"{APP_NAME}/dishes/{photo_id}.jpg", data, "image/jpeg")
         except Exception as e:
-            logger.error(f"Upload failed: {e}"); raise HTTPException(502, "Photo storage is unavailable right now")
+            logger.error(f"Upload failed: {e}"); raise HTTPException(424, "Photo storage is unavailable right now")
         doc = {"id": photo_id, "name": os.path.splitext(file.filename or "photo")[0][:60], "storage_path": result["path"], "content_type": "image/jpeg", "size": result.get("size", len(data)), "is_deleted": False, "created_at": datetime.now(timezone.utc).isoformat()}
         await db.photos.insert_one(doc)
         return public(doc)

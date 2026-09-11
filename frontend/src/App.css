@@ -111,3 +111,7 @@
 .special-card h3{font-size:20px;margin:6px 0}.special-card p{font-size:12px;color:var(--muted);line-height:1.6;min-height:38px;margin-bottom:12px}
 .star-toggle{border:0;background:none;color:#c9b8b0;padding:6px;display:inline-flex;transition:color .2s,transform .2s}.star-toggle:hover{transform:scale(1.15)}.star-toggle.on{color:var(--gold)}
 @media (max-width:900px){.specials-inner{grid-template-columns:1fr;gap:30px}.specials-band{padding:60px 20px}}
+.admin-side-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.sound-toggle:disabled{opacity:.6;cursor:default}
+.wa-error{max-width:420px;text-align:left;line-height:1.6}
+@media (max-width:800px){.admin-side-row{justify-content:flex-start}}

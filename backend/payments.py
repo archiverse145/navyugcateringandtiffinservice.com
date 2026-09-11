@@ -2,6 +2,8 @@
 Backend creates the Razorpay order, verifies the checkout signature and
 handles webhooks. Order total is calculated from MongoDB, never from client.
 """
+import asyncio
+import whatsapp
 import os, hmac, hashlib, json, logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
@@ -100,6 +102,7 @@ def register(app_state):
                           "razorpay_payment_id": body.razorpay_payment_id,
                           "payment_verified_at": datetime.now(timezone.utc).isoformat()}}
             )
+            asyncio.create_task(whatsapp.notify_payment_captured({**order, "payment_status": "Paid"}))
         return {"ok": True, "payment_status": "Paid"}
 
     @router.post("/webhook")
@@ -128,12 +131,15 @@ def register(app_state):
         payment_id = payment.get("id")
         name = event.get("event")
         if name in ("payment.captured", "order.paid") and rzp_order_id:
-            await db.orders.update_one(
+            res = await db.orders.update_one(
                 {"razorpay_order_id": rzp_order_id, "payment_status": {"$ne": "Paid"}},
                 {"$set": {"payment_status": "Paid", "status": "Confirmed",
                           "razorpay_payment_id": payment_id,
                           "payment_updated_at": datetime.now(timezone.utc).isoformat()}}
             )
+            if res.modified_count:
+                order = await db.orders.find_one({"razorpay_order_id": rzp_order_id})
+                if order: asyncio.create_task(whatsapp.notify_payment_captured(order))
         elif name == "payment.failed" and rzp_order_id:
             await db.orders.update_one(
                 {"razorpay_order_id": rzp_order_id, "payment_status": {"$nin": ["Paid", "Refunded"]}},

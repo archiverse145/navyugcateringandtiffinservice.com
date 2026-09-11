@@ -37,12 +37,13 @@ Production-quality full-stack web app for Navyug Catering & Tiffin Services (Ind
 - **Jun 2026: Order sound alert** — admin polls /api/orders/all every 15s; new orders trigger Web-Audio chime (toggle `admin-sound-toggle`, persisted in localStorage), a pulsing banner (`new-orders-banner`) and highlighted rows with NEW tag; stats auto-refresh.
 - **Jun 2026: Admin order details** — order rows show dish preview + note; tap row or View (`admin-view-{id}`) opens Receipt as printable "Kitchen slip" (Receipt `title` prop). Mobile admin row layout fixed.
 - **Jun 2026: Today's Special** — `is_special` on menu items; admin star toggle per row (`admin-menu-special-{id}`); GET /api/menu/specials; home shows burgundy "Aaj ka khaas" band with add-to-cart above Most Ordered when any dish is pinned. User chose Twilio WhatsApp INSTEAD of Resend email (Resend deprioritized).
+- **Jun 2026: Twilio WhatsApp alerts** — `/app/backend/whatsapp.py` (httpx → Twilio Messages API). Owner gets WhatsApp on new order, payment captured (verify + webhook), catering inquiry; customer status messages gated by WHATSAPP_CUSTOMER_ALERTS=false. Admin endpoints: GET /api/notifications/whatsapp/config, POST /api/notifications/whatsapp/test; admin header button "send test" with sandbox tip. Env: TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM=+14155238886 (SANDBOX — account is Trial, no production sender), OWNER_WHATSAPP_TO=+919389887970. STATUS: BLOCKED until owner joins sandbox ("join <code>" to +1 415 523 8886) — Twilio returns 21654 ContentSid Required otherwise. Note: sandbox freeform only within 24h of owner's last message; production needs upgraded account + approved template (add ContentSid support then). Do NOT return HTTP 502 from API — Cloudflare replaces body; use 424.
 - **NEW (Jun 2026): Reorder** — "Order again" on receipt (`receipt-reorder-button`) + "Reorder" per Account row (`reorder-button-{order_id}`) refills cart from live menu (skips unavailable dishes) and navigates to /cart.
 
 ## Prioritized Backlog
 - **Razorpay ACTIVATED (Jun 2026)** — test keys in backend/.env; `/api/payments/razorpay/config` returns enabled:true; live test order creation verified; checkout popup opens in Test Mode. WEBHOOK_SECRET still empty (optional).
 - P2 (deprioritized by user): RESEND_API_KEY for order emails — user prefers Twilio WhatsApp
-- P0: Twilio WhatsApp notifications — user will provide Twilio credentials (Account SID, Auth Token, WhatsApp-enabled From number)
+- P0: WhatsApp — owner must join Twilio sandbox, then re-test; later: upgrade Twilio + production sender + ContentSid template
 - P0: Google Places API integration for live Google Reviews (needs Places API key + Place ID; user's business CID: 1443852844271025327)
 - P1: Twilio WhatsApp notifications (deferred until production WhatsApp Business number is approved)
 - P1: Tiffin Subscriptions / Monthly Plans
