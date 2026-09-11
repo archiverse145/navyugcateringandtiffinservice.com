@@ -50,7 +50,7 @@ async def admin_user(user=Depends(current_user)):
 
 class Register(BaseModel): name: str; email: EmailStr; phone: str = ""; password: str = Field(min_length=6); address: str = ""
 class Login(BaseModel): email: str; password: str
-class MenuIn(BaseModel): name: str; description: str; category: str; section: str = "tiffin"; price: float = Field(gt=0); image: str; is_vegetarian: bool = True; available: bool = True
+class MenuIn(BaseModel): name: str; description: str; category: str; section: str = "tiffin"; price: float = Field(gt=0); image: str; is_vegetarian: bool = True; available: bool = True; is_special: bool = False
 class OrderIn(BaseModel): customer_name: str; phone: str; email: Optional[EmailStr] = None; address: str; special_instructions: str = ""; items: list[dict]
 class CateringIn(BaseModel):
     name: str; phone: str; email: Optional[EmailStr] = None; event_type: str; event_date: str; guests: int = Field(gt=0); location: str; requirements: str = ""; message: str = ""
@@ -95,6 +95,8 @@ async def setup_status(): return {"configured": bool(await db.users.find_one({"r
 
 @api.get("/menu")
 async def menu(): return [public(x) for x in await db.menu.find({}).sort("created_at", 1).to_list(200)]
+@api.get("/menu/specials")
+async def specials(): return [public(x) for x in await db.menu.find({"is_special": True, "available": True}).sort("created_at", 1).to_list(10)]
 @api.get("/menu/most-ordered")
 async def most_ordered():
     pipeline = [{"$unwind": "$items"}, {"$group": {"_id": "$items.menu_id", "ordered": {"$sum": "$items.quantity"}}}, {"$sort": {"ordered": -1}}, {"$limit": 4}]
