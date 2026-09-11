@@ -89,3 +89,9 @@
 .avail-toggle i:after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:transform .2s}
 .avail-toggle.on{color:#438a50}.avail-toggle.on i{background:#438a50}.avail-toggle.on i:after{transform:translateX(16px)}
 .admin-row.sold-out img{filter:grayscale(1);opacity:.6}
+.sound-toggle{border:1px solid var(--line);background:#fff;color:var(--muted);padding:8px 12px;font-size:11px;font-weight:700;display:inline-flex;gap:7px;align-items:center}.sound-toggle.on{color:var(--burgundy);border-color:var(--burgundy)}
+.new-orders-banner{width:100%;border:0;background:var(--burgundy);color:#fff;padding:14px 18px;font-weight:700;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:18px;animation:bannerPulse 1.6s ease-in-out infinite}
+@keyframes bannerPulse{0%,100%{box-shadow:0 0 0 0 rgba(128,0,32,.45)}50%{box-shadow:0 0 0 10px rgba(128,0,32,0)}}
+.admin-row.fresh{background:#fff4ec;box-shadow:inset 4px 0 0 var(--burgundy);padding-left:14px;cursor:pointer;animation:rowIn .5s}
+@keyframes rowIn{from{background:#ffe1cf}to{background:#fff4ec}}
+.new-tag{display:inline-block!important;background:var(--burgundy);color:#fff;font-style:normal;font-size:9px;letter-spacing:1px;padding:2px 6px;margin-left:8px;vertical-align:middle}
