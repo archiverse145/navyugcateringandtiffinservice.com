@@ -52,7 +52,7 @@ export function Receipt({ order, onClose, onReorder }) {
           </tfoot>
         </table>
         {order.special_instructions && <p className="receipt-note"><span>NOTE</span> {order.special_instructions}</p>}
-        <footer className="receipt-foot">Ghar jaisa khana, ab aapke ghar tak. Thank you for choosing Navyug.<br/>+91 9305162868 · @navyugcateringandtiffinservice</footer>
+        <footer className="receipt-foot">Ghar jaisa khana, ab aapke ghar tak. Thank you for choosing Navyug.<br/>Krishna Nagar, Kanpur · +91 93051 62868 · +91 93898 87970</footer>
       </div>
     </div>
   );

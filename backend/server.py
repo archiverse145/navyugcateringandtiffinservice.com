@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field, EmailStr, field_validator
 import asyncio
 import payments as payments_module
 import emailer
+import storage as storage_module
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("navyug")
@@ -188,8 +189,11 @@ async def startup():
     await db.users.create_index("email", unique=True)
     await db.razorpay_webhook_events.create_index("event_id", unique=True)
     await seed_menu()
+    try: await asyncio.to_thread(storage_module.init_storage); logger.info("Storage initialized")
+    except Exception as e: logger.error(f"Storage init failed: {e}")
 @app.on_event("shutdown")
 async def shutdown(): client.close()
 app.include_router(api)
 app.include_router(payments_module.register({"db": db, "current_user": current_user}))
+app.include_router(storage_module.register({"db": db, "admin_user": admin_user}))
 app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000"), "https://navyug-taste-love.preview.emergentagent.com"], allow_methods=["*"], allow_headers=["*"])
