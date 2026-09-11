@@ -32,7 +32,7 @@ Production-quality full-stack web app for Navyug Catering & Tiffin Services (Ind
 - **NEW (Jun 2026): Printable order receipt** — `src/Receipt.js` modal with Print/Save PDF (print-only CSS), Share (Web Share API → clipboard fallback). Opened from confirmation page (`confirmation-receipt-button`) and every row in Account order history (`receipt-button-{order_id}`). Account page styles added.
 
 ## Prioritized Backlog
-- P0: Add Razorpay test keys (RAZORPAY_KEY_ID, KEY_SECRET, WEBHOOK_SECRET) to activate online payments
+- **Razorpay ACTIVATED (Jun 2026)** — test keys in backend/.env; `/api/payments/razorpay/config` returns enabled:true; live test order creation verified; checkout popup opens in Test Mode. WEBHOOK_SECRET still empty (optional).
 - P0: Add RESEND_API_KEY to activate order emails
 - P0: Google Places API integration for live Google Reviews (needs Places API key + Place ID; user's business CID: 1443852844271025327)
 - P1: Twilio WhatsApp notifications (deferred until production WhatsApp Business number is approved)
