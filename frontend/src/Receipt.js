@@ -18,7 +18,7 @@ const receiptText = o => [
   `The taste of love……`,
 ].join("\n");
 
-export function Receipt({ order, onClose, onReorder }) {
+export function Receipt({ order, onClose, onReorder, title }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
     const text = receiptText(order);
@@ -36,11 +36,11 @@ export function Receipt({ order, onClose, onReorder }) {
         </div>
         <header className="receipt-head">
           <div className="logo"><span className="logo-mark">N</span><span><b>Navyug</b><small>The taste of love……</small></span></div>
-          <div className="receipt-meta"><span>ORDER</span><strong data-testid="receipt-order-id">{order.order_id}</strong><small>{when(order.created_at)}</small></div>
+          <div className="receipt-meta"><span>{title ? title.toUpperCase() : "ORDER"}</span><strong data-testid="receipt-order-id">{order.order_id}</strong><small>{when(order.created_at)}</small></div>
         </header>
         <div className="receipt-parties">
           <div><span>DELIVER TO</span><b>{order.customer_name}</b><p>{order.address}</p><p>{order.phone}</p></div>
-          <div><span>STATUS</span><b data-testid="receipt-status">{order.status}</b><p>{order.payment_status === "Paid" ? "Paid online" : "Cash on delivery"}</p></div>
+          <div><span>STATUS</span><b data-testid="receipt-status">{order.status}</b><p>{order.payment_status === "Paid" ? "Paid online" : "Cash on delivery"}</p>{order.email && <p>{order.email}</p>}</div>
         </div>
         <table className="receipt-table">
           <thead><tr><th>Dish</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>
