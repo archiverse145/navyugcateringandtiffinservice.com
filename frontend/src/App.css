@@ -6,3 +6,45 @@
 .button.ghost{background:#fff;color:var(--burgundy);border:1px solid var(--burgundy)}
 .button.ghost:hover{background:var(--burgundy);color:#fff}
 .button:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+.receipt-backdrop{position:fixed;inset:0;background:rgba(45,9,16,.72);backdrop-filter:blur(6px);z-index:50;display:grid;place-items:center;padding:20px;overflow:auto;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.receipt-sheet{text-align:left;background:#fff;width:100%;max-width:560px;padding:34px 38px;border-top:4px solid var(--burgundy);position:relative;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:riseIn .3s}
+@keyframes riseIn{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.receipt-actions{display:flex;gap:10px;align-items:center;margin-bottom:26px;padding-bottom:20px;border-bottom:1px dashed var(--line)}
+.receipt-actions .button{padding:10px 15px;font-size:12px}
+.receipt-actions .icon-button{margin-left:auto}
+.receipt-head{display:flex;justify-content:space-between;align-items:start;gap:20px}
+.receipt-meta{text-align:right}
+.receipt-meta span,.receipt-parties span,.receipt-note span{display:block;font-size:10px;letter-spacing:1.5px;color:var(--gold);font-weight:700}
+.receipt-meta strong{display:block;font:22px 'Playfair Display';color:var(--burgundy);margin:3px 0}
+.receipt-meta small,.receipt-parties p{font-size:12px;color:var(--muted);margin:2px 0}
+.receipt-parties{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;margin:28px 0;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.receipt-parties b{display:block;font-size:14px;margin:4px 0}
+.receipt-table{width:100%;border-collapse:collapse;font-size:13px}
+.receipt-table th{text-align:left;font-size:10px;letter-spacing:1.5px;color:var(--muted);padding:0 0 10px;border-bottom:1px solid var(--line)}
+.receipt-table td{padding:10px 0;border-bottom:1px solid #f3ebe4}
+.receipt-table th:not(:first-child),.receipt-table td:not(:first-child){text-align:right;width:70px}
+.receipt-table td:last-child{width:100px}
+.receipt-table tfoot td{color:var(--muted);border:0;padding:7px 0}
+.receipt-table tfoot tr:first-child td{padding-top:16px}
+.receipt-total td{color:var(--ink)!important;font-weight:700}
+.receipt-total td:last-child{font:22px 'Playfair Display';color:var(--burgundy)!important}
+.receipt-note{margin:18px 0 0;font-size:13px;color:var(--ink);background:var(--cream);padding:12px 14px}
+.receipt-foot{background:none;margin-top:30px;padding:18px 0 0;border-top:1px dashed var(--line);text-align:center;font:italic 13px 'Playfair Display';color:var(--muted);line-height:1.7}
+.confirmation-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.account-order{display:grid;grid-template-columns:1fr auto auto auto;gap:16px;align-items:center}
+.receipt-link{border:1px solid var(--line);background:#fff;color:var(--burgundy);padding:7px 11px;font-size:11px;font-weight:700;display:inline-flex;gap:6px;align-items:center}
+.receipt-link:hover{border-color:var(--burgundy)}
+@media (max-width:640px){.receipt-sheet{padding:24px 18px}.receipt-parties{grid-template-columns:1fr}.account-order{grid-template-columns:1fr auto}.receipt-actions{flex-wrap:wrap}.receipt-table th:not(:first-child),.receipt-table td:not(:first-child){width:auto}}
+@media print{body *{visibility:hidden}.receipt-backdrop{position:static;background:none;padding:0;backdrop-filter:none}.receipt-sheet,.receipt-sheet *{visibility:visible}.receipt-sheet{position:absolute;left:0;top:0;width:100%;max-width:none;box-shadow:none;animation:none}.no-print{display:none!important}}
+.account-grid{display:grid;grid-template-columns:.8fr 1.4fr;gap:40px;margin:10px 0 40px}
+.account-box{background:#fff;border-top:3px solid var(--burgundy);padding:26px 28px;align-self:start}
+.account-box>span{font-size:10px;letter-spacing:2px;color:var(--gold);font-weight:700}
+.account-box h2{font-size:26px;margin:10px 0 8px}
+.account-box p{color:var(--muted);font-size:13px;margin:4px 0}
+.account-order{padding:14px 0;border-bottom:1px solid var(--line);font-size:13px}
+.account-order b{color:var(--burgundy)}
+.account-order span{color:var(--muted)}
+.account-order strong{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink)}
+@media (max-width:760px){.account-grid{grid-template-columns:1fr}}

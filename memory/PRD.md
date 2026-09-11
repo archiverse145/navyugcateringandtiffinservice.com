@@ -29,6 +29,7 @@ Production-quality full-stack web app for Navyug Catering & Tiffin Services (Ind
 - **NEW: Razorpay payment integration** — /api/payments/razorpay/config, /orders, /verify, /webhook (all inactive until keys added)
 - **NEW: Resend transactional email** — order confirmation, status update, catering ack (silently no-ops until API key added)
 - Frontend Checkout conditionally shows "Pay Online" button when Razorpay enabled; COD-only fallback otherwise
+- **NEW (Jun 2026): Printable order receipt** — `src/Receipt.js` modal with Print/Save PDF (print-only CSS), Share (Web Share API → clipboard fallback). Opened from confirmation page (`confirmation-receipt-button`) and every row in Account order history (`receipt-button-{order_id}`). Account page styles added.
 
 ## Prioritized Backlog
 - P0: Add Razorpay test keys (RAZORPAY_KEY_ID, KEY_SECRET, WEBHOOK_SECRET) to activate online payments
