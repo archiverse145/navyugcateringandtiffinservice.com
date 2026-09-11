@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Printer, Share2, X, Check } from "lucide-react";
+import { Printer, Share2, X, Check, RotateCcw } from "lucide-react";
 
 const money = n => `₹${Number(n || 0).toLocaleString("en-IN")}`;
 const when = iso => iso ? new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" }) : "";
@@ -18,7 +18,7 @@ const receiptText = o => [
   `The taste of love……`,
 ].join("\n");
 
-export function Receipt({ order, onClose }) {
+export function Receipt({ order, onClose, onReorder }) {
   const [copied, setCopied] = useState(false);
   const share = async () => {
     const text = receiptText(order);
@@ -31,6 +31,7 @@ export function Receipt({ order, onClose }) {
         <div className="receipt-actions no-print">
           <button className="button primary" data-testid="receipt-print-button" onClick={() => window.print()}><Printer size={15}/> Print / Save PDF</button>
           <button className="button ghost" data-testid="receipt-share-button" onClick={share}>{copied ? <><Check size={15}/> Copied</> : <><Share2 size={15}/> Share</>}</button>
+          {onReorder && <button className="button ghost" data-testid="receipt-reorder-button" onClick={onReorder}><RotateCcw size={15}/> Order again</button>}
           <button className="icon-button" data-testid="receipt-close-button" onClick={onClose} aria-label="Close"><X size={20}/></button>
         </div>
         <header className="receipt-head">
