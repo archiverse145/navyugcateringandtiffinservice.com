@@ -41,7 +41,7 @@ Production-quality full-stack web app for Navyug Catering & Tiffin Services (Ind
 - **NEW (Jun 2026): Reorder** — "Order again" on receipt (`receipt-reorder-button`) + "Reorder" per Account row (`reorder-button-{order_id}`) refills cart from live menu (skips unavailable dishes) and navigates to /cart.
 
 ## Prioritized Backlog
-- **Razorpay ACTIVATED (Jun 2026)** — test keys in backend/.env; `/api/payments/razorpay/config` returns enabled:true; live test order creation verified; checkout popup opens in Test Mode. WEBHOOK_SECRET still empty (optional).
+- **Razorpay ACTIVATED (Jun 2026)** — test keys in backend/.env; `/api/payments/razorpay/config` returns enabled:true; live test order creation verified; checkout popup opens in Test Mode. WEBHOOK_SECRET set (Jun 2026); signed webhook test → order Paid/Confirmed, duplicates ignored, bad signature rejected.
 - P2 (deprioritized by user): RESEND_API_KEY for order emails — user prefers Twilio WhatsApp
 - P0: WhatsApp — owner must join Twilio sandbox, then re-test; later: upgrade Twilio + production sender + ContentSid template
 - P0: Google Places API integration for live Google Reviews (needs Places API key + Place ID; user's business CID: 1443852844271025327)
