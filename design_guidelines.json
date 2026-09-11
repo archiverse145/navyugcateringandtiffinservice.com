@@ -1,0 +1,52 @@
+{
+  "app_name": "Navyug Catering & Tiffin Services",
+  "tagline": "The taste of love……",
+  "theme": "warm_indian_food_aesthetics",
+  "color_palette": {
+    "primary": "#800020",
+    "primary_dark": "#5c0017",
+    "accent": "#d97706",
+    "background_light": "#fdfbf7",
+    "background_dark": "#1a1214",
+    "card_bg": "#ffffff",
+    "text_main": "#2d1810",
+    "text_muted": "#7c5e53",
+    "border_subtle": "#e6d7ce"
+  },
+  "typography": {
+    "heading_font": "Playfair Display, serif",
+    "body_font": "Plus Jakarta Sans, sans-serif"
+  },
+  "image_urls": [
+    {
+      "category": "hero_thali",
+      "image_url": "https://images.unsplash.com/photo-1559561724-732dbca7be1e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2Mzl8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBob21lbWFkZSUyMGZvb2QlMjB0aGFsaSUyMHRpZmZpbnxlbnwwfHx8fDE3ODkxMTQ2Nzh8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Authentic homemade Indian thali and tiffin spread"
+    },
+    {
+      "category": "catering_feast",
+      "image_url": "https://images.unsplash.com/photo-1555244162-803834f70033?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2MDV8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjBjYXRlcmluZyUyMGJ1ZmZldCUyMGZlYXN0JTIwZm9vZHxlbnwwfHx8fDE3ODkxMTQ2Nzh8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Grand catering buffet feast with silver chafing dishes"
+    },
+    {
+      "category": "fresh_curry",
+      "image_url": "https://images.unsplash.com/photo-1627366422957-3efa9c6df0fc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGluZGlhbiUyMGRhbCUyMHBhbmVlciUyMGN1cnJpZXN8ZW58MHx8fHwxNzg5MTE0Njc4fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Freshly prepared aromatic Indian dal and curries"
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Build a complete full-stack web application for Navyug Catering & Tiffin Services with FastAPI backend and React frontend.",
+    "Implement MongoDB database entities for User, Menu Item, Order, Order Item snapshots, Catering Inquiry, and Contact Inquiry.",
+    "Ensure burgundy/deep red (#800020) and warm Indian food aesthetics throughout with Playfair Display and Plus Jakarta Sans fonts.",
+    "Include secure JWT-based auth with registration, login, logout, profile, and order history.",
+    "Include protected first-admin setup screen and robust admin dashboard for menu CRUD, orders management, catering inquiries, and contact messages.",
+    "Ensure all interactive elements and key informational elements have data-testid attributes.",
+    "Support dynamic menu categories (Dal, Punjabi, Rice, Paneer) with availability toggle and pricing."
+  ],
+  "universal_guidelines_for_main_agent": [
+    "Do not use transparent backgrounds on headers or overlays.",
+    "Ensure high contrast and WCAG APCA compliance.",
+    "Add proper data-testid attributes to all buttons, links, inputs, and cards.",
+    "Never use generic AI assistant emojis."
+  ]
+}
