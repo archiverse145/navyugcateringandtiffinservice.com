@@ -12,7 +12,7 @@ const receiptText = o => [
   ``,
   `Subtotal ${money(o.subtotal)}`,
   `Delivery ${o.delivery_fee ? money(o.delivery_fee) : "Free"}`,
-  `Total ${money(o.total)} (${o.payment_status === "Paid" ? "Paid online" : "Cash on delivery"})`,
+  `Total ${money(o.total)} (${o.payment_status === "Paid" ? "Paid online" : o.payment_method === "UPI" ? "UPI" : "Cash on delivery"})`,
   ``,
   `Deliver to: ${o.customer_name}, ${o.address}`,
   `The taste of love……`,
@@ -40,7 +40,7 @@ export function Receipt({ order, onClose, onReorder, title }) {
         </header>
         <div className="receipt-parties">
           <div><span>DELIVER TO</span><b>{order.customer_name}</b><p>{order.address}</p><p>{order.phone}</p></div>
-          <div><span>STATUS</span><b data-testid="receipt-status">{order.status}</b><p>{order.payment_status === "Paid" ? "Paid online" : "Cash on delivery"}</p>{order.email && <p>{order.email}</p>}</div>
+          <div><span>STATUS</span><b data-testid="receipt-status">{order.status}</b><p>{order.payment_status === "Paid" ? "Paid online" : order.payment_method === "UPI" ? `UPI / QR${order.utr ? ` · ${order.utr}` : ""}` : "Cash on delivery"}</p>{order.event_datetime && <p data-testid="receipt-event">📅 {new Date(order.event_datetime).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</p>}{order.email && <p>{order.email}</p>}</div>
         </div>
         <table className="receipt-table">
           <thead><tr><th>Dish</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead>

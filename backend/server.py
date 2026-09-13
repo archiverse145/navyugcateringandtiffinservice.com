@@ -52,7 +52,7 @@ async def admin_user(user=Depends(current_user)):
 class Register(BaseModel): name: str; email: EmailStr; phone: str = ""; password: str = Field(min_length=6); address: str = ""
 class Login(BaseModel): email: str; password: str
 class MenuIn(BaseModel): name: str; description: str; category: str; section: str = "tiffin"; price: float = Field(gt=0); image: str; is_vegetarian: bool = True; available: bool = True; is_special: bool = False
-class OrderIn(BaseModel): customer_name: str; phone: str; email: Optional[EmailStr] = None; address: str; special_instructions: str = ""; items: list[dict]
+class OrderIn(BaseModel): customer_name: str; phone: str; email: Optional[EmailStr] = None; address: str; special_instructions: str = ""; items: list[dict]; event_datetime: Optional[str] = None; utr: Optional[str] = None; payment_method: str = "COD"
 class CateringIn(BaseModel):
     name: str; phone: str; email: Optional[EmailStr] = None; event_type: str; event_date: str; guests: int = Field(gt=0); location: str; requirements: str = ""; message: str = ""
     @field_validator("email", mode="before")
@@ -96,6 +96,10 @@ async def setup_status(): return {"configured": bool(await db.users.find_one({"r
 
 @api.get("/menu")
 async def menu(): return [public(x) for x in await db.menu.find({}).sort("created_at", 1).to_list(200)]
+@api.get("/payments/upi/config")
+async def upi_config():
+    upi_id = os.environ.get("UPI_ID", "").strip()
+    return {"enabled": bool(upi_id), "upi_id": upi_id, "payee_name": os.environ.get("UPI_PAYEE_NAME", "Navyug Catering & Tiffin"), "whatsapp_number": os.environ.get("ORDER_WHATSAPP_NUMBER", "")}
 @api.get("/menu/specials")
 async def specials(): return [public(x) for x in await db.menu.find({"is_special": True, "available": True}).sort("created_at", 1).to_list(10)]
 @api.get("/menu/most-ordered")
@@ -131,7 +135,7 @@ async def create_order(data: OrderIn, user=Depends(current_user)):
         subtotal += item["price"] * quantity
         items.append({"menu_id": item["id"], "name": item["name"], "price": item["price"], "quantity": quantity})
     delivery = 40 if subtotal < 500 else 0
-    doc = {"order_id": "NV-" + secrets.token_hex(4).upper(), "user_id": str(user["_id"]), "customer_name": data.customer_name, "phone": data.phone, "email": data.email, "address": data.address, "special_instructions": data.special_instructions, "items": items, "subtotal": subtotal, "delivery_fee": delivery, "total": subtotal+delivery, "payment_status": "Pending", "status": "Pending", "created_at": now()}
+    doc = {"order_id": "NV-" + secrets.token_hex(4).upper(), "user_id": str(user["_id"]), "customer_name": data.customer_name, "phone": data.phone, "email": data.email, "address": data.address, "special_instructions": data.special_instructions, "event_datetime": data.event_datetime, "utr": (data.utr or "").strip() or None, "payment_method": data.payment_method, "items": items, "subtotal": subtotal, "delivery_fee": delivery, "total": subtotal+delivery, "payment_status": "Pending", "status": "Pending", "created_at": now()}
     await db.orders.insert_one(doc)
     asyncio.create_task(whatsapp.notify_new_order(doc))
     if doc.get("email"):
@@ -185,9 +189,7 @@ async def seed_menu():
         ("Chai","Hot masala chai.","Drinks",20,T,None),("Cold Drink","Chilled soft drink.","Drinks",40,T,None),
         ("Mix Veg","Seasonal vegetables in a homestyle gravy, topped with cheese.","Gravy",120,T,"mix-veg"),("Aloo Sabzi","Dry potato sabzi, tempered and finished with a little cheese.","Dry Sabzi",80,T,"aloo-sabzi"),("Green Salad","Fresh carrot, cucumber and radish salad.","Salad & Raita",50,T,"green-salad"),("Onion Salad","Crisp onion rings with tomato and cucumber.","Salad & Raita",50,T,"onion-salad"),("Raita","Chilled curd raita with a gentle tempering.","Salad & Raita",50,T,"raita"),("Veg Pulao (1 bowl)","Fragrant rice with seasonal vegetables.","Roti & Rice",50,T,"veg-pulao"),("Veg Noodles","Street-style vegetable noodles.","Snacks",80,S,"veg-noodles"),
     ]
-    marker = await db.settings.find_one({"key": "menu_seed"})
-    if marker and marker.get("version", 0) >= 3: return
-    await db.menu.delete_many({})
+    if await db.menu.count_documents({}) > 0: return
     await db.menu.insert_many([{"id": uuid.uuid4().hex[:10], "name": n, "description": d, "category": c, "section": sec, "price": p, "image": f"/photos/{img}.jpg" if img else images[i%3], "is_vegetarian": True, "available": True, "created_at": now()} for i,(n,d,c,p,sec,img) in enumerate(dishes)])
     await db.settings.update_one({"key": "menu_seed"}, {"$set": {"version": 3}}, upsert=True)
 @app.on_event("startup")
@@ -203,4 +205,4 @@ app.include_router(api)
 app.include_router(payments_module.register({"db": db, "current_user": current_user}))
 app.include_router(storage_module.register({"db": db, "admin_user": admin_user}))
 app.include_router(whatsapp.register({"admin_user": admin_user}))
-app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=[os.environ.get("FRONTEND_URL", "http://localhost:3000"), "https://navyug-taste-love.preview.emergentagent.com"], allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(CORSMiddleware, allow_credentials=True, allow_origins=["*"] if os.environ.get("CORS_ORIGINS", "*").strip() == "*" else [o.strip() for o in os.environ["CORS_ORIGINS"].split(",") if o.strip()], allow_methods=["*"], allow_headers=["*"])

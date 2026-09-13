@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 5 validates the WhatsApp click-to-chat checkout flow end-to-end. Backend: 6/6 new tests + 6/6 regression pass (menu = 57 items, idempotent seed, UPI config disabled shape, CORS preflight ACAO header, orders persist event_datetime/utr/payment_method with proper defaults). Frontend: customer login -> add 2 dishes from /just-hungry -> /checkout renders all required fields (name/phone/email/event/address/instructions/UPI box/UTR/send-whatsapp/pay-online). Missing event_date submission shows checkout-error and does NOT create order. Full submission with UTR123 creates order NV-D7854ACA, wa.me href contains order id, name, phone, 'Event:' line, venue, each item, Subtotal/Delivery/Total and 'UPI / QR · Txn ID UTR123'. Cart pill -> 0. Receipt modal shows receipt-event and 'UPI / QR · UTR123'. Admin orders row shows event date and payment label; kitchen slip opens with event line. Mobile 390px checkout: no horizontal overflow, WA button fully visible.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/payments/razorpay/*", "issue": "test_payments_and_email.py has 3 stale tests assuming Razorpay is disabled, but rzp_test_Tag69UgsTucedr is now set in .env so those endpoints return 200/404 instead of 503. Not a product bug — update stale tests."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_whatsapp_order_flow.py",
+    "/app/backend/tests/test_navyug_live.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Refresh /app/backend/tests/test_payments_and_email.py — the 3 disabled-Razorpay assertions no longer match the enabled test key in backend/.env.",
+    "(Nit) The initial window.open('','_blank') pre-navigation gets stripped by wa.me redirect so the emoji shows as replacement char in the very first URL seen by Playwright; user-visible confirmation-whatsapp-button href is correct with emoji. No fix needed unless owner reports it."
+  ],
+  "critical_code_review_comments": [
+    "Checkout.valid() only shows the friendly checkout-error when required HTML attrs are bypassed. With required in place the browser blocks submit and no message appears — acceptable but consider mirroring the JS validation message next to the invalid field for consistency.",
+    "sendViaWhatsApp opens window.open('','_blank') before awaiting createOrder; if the POST throws (e.g. network) the empty tab is only closed inside the catch. If the user closes the tab mid-request the reference becomes null-safe (guarded).",
+    "orderMessage prints 'Delivery: Free' as text but the receipt shows ₹0 — minor inconsistency, both are readable."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_whatsapp_order_flow.py",
+    "/app/test_reports/pytest/pytest_results.xml",
+    "/app/test_reports/iteration_5.json"
+  ],
+  "success_rate": {"backend": "100% (12/12 relevant; 3 stale Razorpay tests unrelated to this iteration)", "frontend": "100% (checkout WhatsApp + receipt + admin slip + mobile viewport)"},
+  "test_credentials": "Customer receipt.tester@example.com / test1234, Admin test-admin@navyug.local / NavyugAdmin#2026",
+  "seed_data_creation": "Created customer TEST WA orders (NV-D7854ACA with UTR123 + one COD default order). Test users test.wa.<hex>@example.com registered by pytest fixture.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "WhatsApp order flow, event_datetime/utr/payment_method, admin row preview and kitchen slip event line, mobile layout — all validated. UPI is intentionally disabled in .env (UPI_ID empty); when UPI_ID is set later, verify upi-qr renders, copy-upi-button works and orderMessage still contains 'UPI / QR · Txn ID <utr>'. Razorpay is enabled with test keys, so pay-online-button is visible; do NOT trigger real card payments.",
+  "rca of the issue": ""
+}
