@@ -67,7 +67,7 @@ async def root(): return {"message": "Navyug Catering API"}
 
 @api.post("/auth/register")
 async def register(data: Register, response: Response):
-    email = data.email.lower()
+    email = data.email.strip().lower()
     if await db.users.find_one({"email": email}): raise HTTPException(409, "An account with this email already exists")
     doc = {"name": data.name, "email": email, "phone": data.phone, "address": data.address, "password_hash": hash_password(data.password), "role": "customer", "created_at": now()}
     result = await db.users.insert_one(doc); doc["_id"] = result.inserted_id
@@ -75,7 +75,7 @@ async def register(data: Register, response: Response):
     return public(doc)
 @api.post("/auth/login")
 async def login(data: Login, response: Response):
-    user = await db.users.find_one({"email": data.email.lower()})
+    user = await db.users.find_one({"email": data.email.strip().lower()})
     if not user or not verify_password(data.password, user["password_hash"]): raise HTTPException(401, "Email or password is incorrect")
     response.set_cookie("access_token", token(user), httponly=True, samesite="lax", max_age=604800)
     return public(user)
@@ -192,11 +192,23 @@ async def seed_menu():
     if await db.menu.count_documents({}) > 0: return
     await db.menu.insert_many([{"id": uuid.uuid4().hex[:10], "name": n, "description": d, "category": c, "section": sec, "price": p, "image": f"/photos/{img}.jpg" if img else images[i%3], "is_vegetarian": True, "available": True, "created_at": now()} for i,(n,d,c,p,sec,img) in enumerate(dishes)])
     await db.settings.update_one({"key": "menu_seed"}, {"$set": {"version": 3}}, upsert=True)
+async def seed_admin():
+    email, password = os.environ.get("ADMIN_EMAIL", "").strip().lower(), os.environ.get("ADMIN_PASSWORD", "")
+    if not email or not password: return
+    existing = await db.users.find_one({"email": email})
+    if existing is None:
+        await db.users.insert_one({"name": "Navyug Owner", "email": email, "phone": "", "address": "", "password_hash": hash_password(password), "role": "admin", "created_at": now()})
+        logger.info("Admin account seeded")
+    elif existing.get("role") != "admin" or not verify_password(password, existing["password_hash"]):
+        await db.users.update_one({"email": email}, {"$set": {"role": "admin", "password_hash": hash_password(password)}})
+        logger.info("Admin account updated")
+
 @app.on_event("startup")
 async def startup():
     await db.users.create_index("email", unique=True)
     await db.razorpay_webhook_events.create_index("event_id", unique=True)
     await seed_menu()
+    await seed_admin()
     try: await asyncio.to_thread(storage_module.init_storage); logger.info("Storage initialized")
     except Exception as e: logger.error(f"Storage init failed: {e}")
 @app.on_event("shutdown")

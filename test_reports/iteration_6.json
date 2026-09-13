@@ -1,0 +1,27 @@
+{
+  "summary": "Focused test of the admin login fix for navyugcatering05@gmail.com. All 9 backend pytest cases pass (login success, /auth/me, /orders/all, case/whitespace-tolerant email variants, wrong password 401 with string detail, old admin rejected, customer login, and single-admin-after-restart idempotency). Frontend Playwright verified on desktop (1920x1080) and mobile (390x844): auth-email-input has autocapitalize='none', autocorrect='off', spellcheck='false'; typing 'Navyugcatering05@gmail.com' + 'ratika@123' logs in, /admin shows admin-greeting and 24 admin-row-* elements; wrong password shows auth-error and stays on /login; customer login works and /admin correctly displays 'Admin access only' for non-admin.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/admin as non-admin", "issues": ["Admin component's useEffect hooks fire before the role check, so a logged-in customer visiting /admin triggers GET /api/orders/all, /api/photos, and /api/notifications/whatsapp/config — all return 403 and axios throws, surfacing as a react-dev error overlay ('Uncaught runtime errors: Request failed with status code 403'). The user-visible 'Admin access only' message still renders, so functionally OK, but the console noise and overlay are ugly. Fix: early-return the JSX before the effects or guard each effect with `if (user?.role !== 'admin') return;`."]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_admin_login.py", "/app/test_reports/pytest/admin_login.xml"],
+  "action_items": ["(Optional) Guard the Admin component's useEffect polling with an admin-role check to silence 403s / dev-overlay when non-admins hit /admin."],
+  "critical_code_review_comments": [
+    "server.py is a single ~220-line file that already mixes auth, menu, orders, catering, contact and seeding — still readable but approaching the split threshold; consider modularizing.",
+    "seed_admin correctly upserts on startup and login uses .strip().lower() — matches the auth playbook. bcrypt hashes verified in DB ($2b$ format via bcrypt.hashpw).",
+    "No brute-force lockout (playbook mentions 5-fail lockout). Not required by this task but worth noting for later hardening.",
+    "Admin frontend component runs data-fetching useEffects before the role guard — see design_issues above."
+  ],
+  "updated_files": ["/app/backend/tests/test_admin_login.py"],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% of scoped flows"},
+  "test_credentials": "Admin: navyugcatering05@gmail.com / ratika@123 (works). Customer: receipt.tester@example.com / test1234 (works). Old test-admin@navyug.local correctly rejected.",
+  "seed_data_creation": "None. seed_admin ran on startup and remains idempotent — exactly 1 user with email navyugcatering05@gmail.com after `sudo supervisorctl restart backend`.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Admin login bug is fully fixed. Auth is case/whitespace-tolerant, cookie-based (httponly, samesite=lax). Only cosmetic issue left: Admin component runs API polling effects before role check, causing 403 axios errors in console when a customer visits /admin — functionality is correct (shows 'Admin access only'). Backend pytest lives at /app/backend/tests/test_admin_login.py; run with `-n 0` because the shared cluster can 502 under parallel load.",
+  "rca of the issue": "Original 'not working' for admin login was due to (a) previous admin seed using a different email/password than what was in .env, and (b) email input auto-capitalizing on mobile keyboards. Fixes verified: seed_admin() at server.py:195-204 now upserts role=admin and re-hashes the password whenever it differs; login() at server.py:76-81 strips/lowercases email before lookup; Auth form at App.js:31 sets autoCapitalize='none', autoCorrect='off', spellCheck=false and .trim()s email on change. All fixes function correctly under load and after backend restart."
+}
